@@ -49,8 +49,14 @@ const Gameboard = (() => {
     return board[index] === "";
   };
 
+  const reset = () => {
+    board.forEach((_, index) => {
+      board[index] = "";
+    });
+  };
+
   //Public API
-  return { getBoard, placeMark, checkWinner, checkTie, isSquareEmpty };
+  return { getBoard, placeMark, checkWinner, checkTie, isSquareEmpty, reset };
 })();
 
 //Module to create the gameController
@@ -93,11 +99,58 @@ const GameController = (() => {
     switchPlayer();
   };
 
-  return { getCurrentPlayer, playRound, isGameOver, getWinner };
+  const reset = () => {
+    Gameboard.reset();
+    currentPlayer = player1;
+    gameOver = false;
+    winner = null;
+  };
+
+  return { getCurrentPlayer, playRound, isGameOver, getWinner, reset };
 })();
 
-console.log(Gameboard.getBoard());
+const DisplayController = (() => {
+  const status = document.querySelector(".status");
+  const resetButton = document.querySelector(".reset-button");
+  const cells = document.querySelectorAll(".cell");
 
-Gameboard.placeMark(0, "X");
+  const renderBoard = () => {
+    const board = Gameboard.getBoard();
+    cells.forEach((cell, index) => {
+      cell.textContent = board[index];
+    });
+  };
 
-console.log(Gameboard.getBoard());
+  const updateStatus = () => {
+    if (!GameController.isGameOver()) {
+      status.textContent = `Player ${GameController.getCurrentPlayer().marker}'s turn`;
+    } else if (GameController.getWinner()) {
+      status.textContent = `Player ${GameController.getWinner()} won!`;
+    } else {
+      status.textContent = "It's a tie";
+    }
+  };
+
+  const bindEvents = () => {
+    cells.forEach((cell) => {
+      cell.addEventListener("click", () => {
+        const index = Number(cell.dataset.index);
+        GameController.playRound(index);
+        render();
+      });
+    });
+
+    resetButton.addEventListener("click", () => {
+      GameController.reset();
+      render();
+    });
+  };
+
+  const render = () => {
+    renderBoard();
+    updateStatus();
+  };
+
+  bindEvents();
+  render();
+})();
